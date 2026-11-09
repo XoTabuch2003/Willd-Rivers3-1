@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d3b2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Дикі річки">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <title>Дикі річки України</title>
+  <meta name="description" content="Енциклопедія та польові спостереження диких річок України">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a href="#home" class="logo-link" onclick="showPage('home')">
+        <img src="logo.png" alt="Логотип" class="logo-img">
+        <div class="logo-text">
+          <span class="logo-title">Дикі річки</span>
+          <span class="logo-subtitle">України</span>
+        </div>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Меню">☰</button>
+      <nav class="nav" id="mainNav">
+        <a href="#home" onclick="showPage('home')">Головна</a>
+        <a href="#catalog" onclick="showPage('catalog')">Усі статті</a>
+        <a href="#add" onclick="showPage('add')">Додати</a>
+        <a href="#settings" onclick="showPage('settings')">Налаштування</a>
+        <a href="#about" onclick="showPage('about')">Про проєкт</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- HOME -->
+    <section id="page-home" class="page active">
+      <div class="hero" id="heroBlock">
+        <div class="hero-overlay">
+          <h1>Дикі річки України</h1>
+          <p class="hero-lead">Природне багатство · Польові дослідження · Енциклопедія</p>
+          <button class="btn btn-primary" onclick="showPage('catalog')">Усі статті</button>
+        </div>
+      </div>
+
+      <div class="container">
+        <h2 class="section-title">Тематики</h2>
+        <div id="theme-buttons" class="theme-buttons"></div>
+
+        <h2 class="section-title">Карта досліджень</h2>
+        <p class="map-desc">Іконки — місця спостережень за тематиками. Клікніть, щоб відкрити статтю.</p>
+        <div id="home-map" class="home-map"></div>
+
+        <h2 class="section-title">Останні спостереження</h2>
+        <div id="recent-list" class="cards-grid"></div>
+      </div>
+    </section>
+
+    <!-- CATALOG / ALL ARTICLES -->
+    <section id="page-catalog" class="page">
+      <div class="container">
+        <h1 class="page-title">Усі статті</h1>
+        <div id="catalog-theme-buttons" class="theme-buttons"></div>
+        <div class="filters">
+          <input type="search" id="searchInput" placeholder="Пошук..." oninput="filterCatalog()">
+          <select id="filterWater" onchange="filterCatalog()">
+            <option value="">Усі водні об’єкти</option>
+
+          </select>
+        </div>
+        <div id="catalog-list" class="cards-grid"></div>
+      </div>
+    </section>
+
+    <!-- ARTICLE -->
+    <section id="page-article" class="page">
+      <div class="container" id="article-content"></div>
+    </section>
+
+    <!-- ADD -->
+    <section id="page-add" class="page">
+      <div class="container narrow">
+        <h1 class="page-title" id="form-title">Нове спостереження</h1>
+        <p class="form-hint" id="publish-hint">Після збереження стаття з’явиться одразу у вас. Якщо налаштовано GitHub-токен — вона автоматично опублікується для всіх.</p>
+
+        <form id="articleForm" class="article-form">
+          <input type="hidden" id="editId">
+
+          <label>Тематика *</label>
+          <select id="f-type" required></select>
+
+          <label>Назва *</label>
+          <input type="text" id="f-name" required placeholder="Напр. Краснопірка звичайна">
+
+          <label>Латинська / додаткова назва</label>
+          <input type="text" id="f-latin" placeholder="Scardinius erythrophthalmus">
+
+          <label>Водний ресурс / місце *</label>
+          <input type="text" id="f-water" required placeholder="р. Ворскла, Полтавська область">
+
+          <label>Період спостереження</label>
+          <input type="text" id="f-period" placeholder="травень 2025">
+
+          <label>Погода</label>
+          <input type="text" id="f-weather" placeholder="+18°C, ясно">
+
+          <label>Фото (URL)</label>
+          <input type="url" id="f-photo" placeholder="https://...">
+          <label>Або з пристрою</label>
+          <input type="file" id="f-photoFile" accept="image/*" onchange="handlePhotoUpload(event)">
+          <div id="photoPreview" class="photo-preview"></div>
+
+          <label>Геолокація</label>
+          <div class="geo-search-row">
+            <input type="text" id="f-geoSearch" placeholder="Назва місця (Ворскла Полтава)">
+            <button type="button" class="btn btn-secondary" onclick="searchPlace()">🔍 Знайти</button>
+          </div>
+          <div id="geoResults" class="geo-results"></div>
+          <div class="geo-row">
+            <input type="text" id="f-lat" placeholder="Широта">
+            <input type="text" id="f-lon" placeholder="Довгота">
+            <button type="button" class="btn btn-secondary" onclick="getCurrentLocation()">📍 GPS</button>
+          </div>
+          <div id="form-map" class="form-map"></div>
+          <p class="form-map-hint">Клікніть на карті, щоб поставити точку</p>
+
+          <label>Короткий опис</label>
+          <textarea id="f-intro" rows="3"></textarea>
+
+          <label>Детальний опис (морфологія, екологія, живлення тощо)</label>
+          <textarea id="f-body" rows="8" placeholder="Весь основний текст статті..."></textarea>
+
+          <label>Посилання (кожне з нового рядка)</label>
+          <textarea id="f-links" rows="2"></textarea>
+
+          <label>Статус / примітка</label>
+          <input type="text" id="f-status" placeholder="Червона книга, інвазивний...">
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Зберегти і опублікувати</button>
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">Очистити</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="page-settings" class="page">
+      <div class="container narrow">
+        <h1 class="page-title">Налаштування куратора</h1>
+
+        <div class="settings-card">
+          <h3>🚀 Автопублікація на GitHub</h3>
+          <p>Щоб статті з’являлись на сайті для всіх <strong>без ручного завантаження</strong> — додайте Personal Access Token.</p>
+          <ol class="settings-steps">
+            <li>Відкрийте <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a></li>
+            <li>Generate new token (classic) → поставте галочку <strong>repo</strong></li>
+            <li>Скопіюйте токен і вставте нижче</li>
+          </ol>
+          <label>GitHub Username</label>
+          <input type="text" id="gh-user" placeholder="XoTabuch2003">
+          <label>Назва репозиторію</label>
+          <input type="text" id="gh-repo" placeholder="Willd-Rivers">
+          <label>Personal Access Token</label>
+          <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
+          <div class="form-actions" style="margin-top:1rem">
+            <button type="button" class="btn btn-primary" onclick="saveGithubSettings()">Зберегти налаштування</button>
+            <button type="button" class="btn btn-outline" onclick="testGithub()">Перевірити з’єднання</button>
+          </div>
+          <p id="gh-status" class="form-hint" style="margin-top:0.75rem;display:none"></p>
+        </div>
+
+        <div class="settings-card" style="margin-top:1.5rem">
+          <h3>🎨 Тематики статей</h3>
+          <p>Додавайте свої тематики та обирайте іконки. Вони з’являться кнопками на головній і в каталозі.</p>
+          <div id="themes-list"></div>
+          <div class="theme-add-row">
+            <input type="text" id="new-theme-name" placeholder="Назва тематики">
+            <input type="text" id="new-theme-icon" placeholder="Іконка (🐟)" maxlength="4" style="width:80px">
+            <button type="button" class="btn btn-secondary" onclick="addTheme()">Додати</button>
+          </div>
+        </div>
+
+        <div class="settings-card" style="margin-top:1.5rem">
+          <h3>🖼 Обкладинка головної</h3>
+          <label>URL зображення</label>
+          <input type="url" id="cover-url" placeholder="https://...">
+          <label>Або файл</label>
+          <input type="file" id="cover-file" accept="image/*" onchange="handleCoverUpload(event)">
+          <div id="coverPreview" class="photo-preview"></div>
+          <div class="form-actions" style="margin-top:1rem">
+            <button type="button" class="btn btn-primary" onclick="saveCover()">Зберегти обкладинку</button>
+            <button type="button" class="btn btn-secondary" onclick="resetCover()">Скинути</button>
+          </div>
+        </div>
+
+        <div class="settings-card" style="margin-top:1.5rem">
+          <h3>📦 Резервна копія</h3>
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" onclick="exportData()">Експорт JSON</button>
+            <label class="btn btn-outline file-label">Імпорт JSON<input type="file" accept=".json" onchange="importData(event)" hidden></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="page-about" class="page">
+      <div class="container narrow">
+        <h1 class="page-title">Про проєкт</h1>
+        <div class="about-content">
+          <img src="cover-02.png" alt="" class="about-img">
+          <p><strong>Дикі річки України</strong> — енциклопедія та архів польових спостережень водного світу.</p>
+          <p>Куратор може додавати статті з телефону, обирати тематики, ставити геолокацію та автоматично публікувати їх на сайті.</p>
+          <h3>Встановити на телефон</h3>
+          <p><strong>Android:</strong> меню ⋮ → «Встановити застосунок»</p>
+          <p><strong>iPhone:</strong> Поділитися → «На екран Додому»</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <img src="logo.png" alt="" class="footer-logo">
+        <p>Дикі річки України</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
